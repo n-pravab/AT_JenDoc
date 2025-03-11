@@ -9,13 +9,17 @@ pipeline {
     stages {
         stage('Clone Repository') {
             steps {
-                git 'https://github.com/n-pravab/AT_JenDoc.git'
+                git branch: 'main', url: 'https://github.com/n-pravab/AT_JenDoc.git'
             }
         }
 
         stage('Make Build Script Executable') {
             steps {
                 sh 'chmod +x build.sh'
+                sh '''
+                    head ./docker-compose.yml
+                    docker image ls | grep ${IMAGE_NAME}
+                '''
             }
         }
 
