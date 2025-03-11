@@ -1,0 +1,27 @@
+# Ignore node_modules to prevent unnecessary copying
+node_modules
+
+# Logs
+logs/
+*.log
+
+# Ignore environment variable files
+.env
+.env.local
+.env.production
+.env.test
+
+# Ignore Docker Compose override files
+docker-compose.override.yml
+
+# Ignore build artifacts
+dist/
+build/
+.DS_Store
+
+# Ignore editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+

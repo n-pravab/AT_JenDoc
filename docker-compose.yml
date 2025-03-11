@@ -1,0 +1,7 @@
+services:
+  web:
+    image: node-app:new
+    ports:
+      - "3000:3000"
+    container_name: my-frontend-app # Custom name for web app
+    restart: always
