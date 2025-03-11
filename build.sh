@@ -16,3 +16,6 @@ docker tag ${IMAGE_NAME}:${TAG} ${IMAGE_NAME}:latest
 # Update docker-compose.yml with the new image tag
 echo "Updating docker-compose.yml to use the new image tag"
 sed -i "s|image: ${IMAGE_NAME}:.*|image: ${IMAGE_NAME}:${TAG}|" ${COMPOSE_FILE}
+
+# Save TAG to a file so Jenkins can read it
+echo $TAG > tag.txt
