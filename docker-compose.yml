@@ -1,6 +1,6 @@
 services:
   web:
-    image: node-app:new
+    image: pravab369/simple-app:latest
     ports:
       - "3000:3000"
     container_name: my-frontend-app # Custom name for web app

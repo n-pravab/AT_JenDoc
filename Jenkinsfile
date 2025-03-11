@@ -4,6 +4,7 @@ pipeline {
     environment {
         IMAGE_NAME = "pravab369/simple-app"
         DOCKERHUB_CREDENTIALS = "dockerhub-pat-token"
+        COMPOSE_FILE = "docker-compose.yml"
     }
 
     stages {
@@ -13,61 +14,39 @@ pipeline {
             }
         }
 
-        stage('Make Build Script Executable') {
-            steps {
-                sh 'chmod +x build.sh'
-                sh '''
-                    head ./docker-compose.yml
-                    docker image ls | grep ${IMAGE_NAME}
-                '''
-            }
-        }
-
-        stage('Build Docker Image') {
-            steps {
-                sh 'echo "BUILD_NUMBER is: $BUILD_NUMBER"'
-                sh './build.sh'
-            }
-        }
-
-        stage('Login to DockerHub') {
-            steps {
-                withCredentials([usernamePassword(credentialsId: 'dockerhub-pat-token', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
-            }
-        }
-        }
-        stage('Push Image to DockerHub') {
-            steps {
-                sh "docker push ${FULL_IMAGE_NAME}"
-            }
-        }
-
-        stage('Deploy with Docker Compose') {
+        stage('Build Docker Image and Update docker-compose.yml') {
             steps {
                 script {
-                 def topTag = sh(script: "curl -s 'https://hub.docker.com/v2/repositories/pravab369/simple-app/tags/?page_size=100' | jq -r '.results[].name' | sort -r | head -n 1", returnStdout: true).trim()
-                 echo "Top tag: $topTag"
-                 def fullImageName = "$IMAGE_NAME:$topTag"
-                 def imageExists = sh(script: "docker images -q $fullImageName", returnStdout: true).trim()
-            
-                  if (imageExists) {
-                    echo "Image already exists locally. Running container using Docker Compose..."
-                    sh 'docker-compose up -d'
-                  } else {
-                   echo "Pulling image from Docker Hub and running with Docker Compose..."
-                   sh "docker pull $fullImageName"
-                   sh 'docker-compose up -d'
-                 }
-          }
-         }
-         }
-    
+                    // Run the build.sh script
 
-    post {
-        always {
-            sh 'docker logout'
+                    sh 'chmod +x build.sh'
+                    sh './build.sh'
+
+                    // Read the TAG value from tag.txt
+                    env.TAG = sh(script: 'cat tag.txt', returnStdout: true).trim()
+                }
+            }
+        }
+
+        stage('Push Docker Image to Docker Hub') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-pat-token', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+                    script {
+                        def imageName = env.IMAGE_NAME
+
+                        sh "echo \"${DOCKER_PASSWORD}\" | docker login -u \"${DOCKER_USERNAME}\" --password-stdin"
+                        sh "docker push ${imageName}:${env.TAG}"
+                    }
+                }
+            }
+        }
+
+        stage('Restart Container') {
+            steps {
+                script {
+                    sh "docker compose up -d --force-recreate"
+                }
+            }
         }
     }
-}
 }

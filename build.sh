@@ -1,18 +1,21 @@
 #!/bin/bash
 
-# image name with dynamic tag
+# Build the Docker image with the timestamped tag
 IMAGE_NAME="pravab369/simple-app"
 TAG=$(date +%Y.%m.%d-%H.%M.%S)
+COMPOSE_FILE="docker-compose.yml"
 
-docker build -t $IMAGE_NAME:$TAG .
+# Build the Docker image
+echo "Building Docker image: $IMAGE_NAME:$TAG"
+docker build -t ${IMAGE_NAME}:${TAG} .
 
-# push to Docker Hub
-# docker push $IMAGE_NAME:$TAG
+# Optionally tag the image as 'latest'
+echo "Tagging the image as latest"
+docker tag ${IMAGE_NAME}:${TAG} ${IMAGE_NAME}:latest
 
-# Output the tag in a structured way for Jenkins
-echo "BUILT_IMAGE_TAG=$TAG"
+# Update docker-compose.yml with the new image tag
+echo "Updating docker-compose.yml to use the new image tag"
+sed -i "s|image: ${IMAGE_NAME}:.*|image: ${IMAGE_NAME}:${TAG}|" ${COMPOSE_FILE}
 
-# pdate docker-compose.yml with the latest tag
-sed -i "s|image: $IMAGE_NAME:.*|image: $IMAGE_NAME:$TAG|" ./docker-compose.yml
-
-echo "Updated docker-compose.yml with image: $IMAGE_NAME:$TAG"
+# Save TAG to a file so Jenkins can read it
+echo $TAG > tag.txt
